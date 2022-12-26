@@ -34,4 +34,34 @@ function turnClick(square){
 function turn(squareId, player){
     origBoard[squareId] = player;
     document.getElementById(squareId).innerText = player; 
+    let gameWon = checkWin(origBoard, player)
+    if(gameWon) gameOver(gameWon)
+}
+
+//Checks for a win by traversing through the winning combinations and sets gamewon. 
+function checkWin(board, player){
+    //reduce function goes through every element of the board array, returns a single value. a: accumulator that returns at the end.
+    // a is initialized to [], e is the element of the board array we are going through, i is the index. 
+    let plays = board.reduce((a,e,i) =>
+    (e===player) ? a.concat(i) : a, []);
+    let gameWon = null;
+    for(let[index, win] of winCombinations.entries()){
+        if(win.every(elem => plays.indexOf(elem) > -1)){
+            gameWon = {index:index, player:player};
+            break; 
+        }
+    }
+    return gameWon;
+}
+
+//gets the winner, sets the winning 3 squares to blue if the user wins, else sets it to red if the AI wins.
+//Sets the boxes unclickable after the game is over. 
+function gameOver(gameWon){
+    for(let index of winCombinations[gameWon.index]){
+        document.getElementById(index).style.backgroundColor = gameWon.player == human ? "blue" : "red";
+    }
+
+    for(var i = 0; i < cells.length; i++){
+        cells[i].removeEventListener('click', turnClick, false);
+    }
 }
