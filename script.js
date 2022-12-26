@@ -30,7 +30,7 @@ function startGame(){
 function turnClick(square){
     if(typeof origBoard[square.target.id] == 'number'){
         turn(square.target.id, human)
-        if(!checkTie()){
+        if(!checkWin(origBoard,human) && !checkTie()){
             turn(bestSpot(), AI);
         }
     }
@@ -72,20 +72,24 @@ function gameOver(gameWon){
     declareWinner(gameWon.player == human ? "You Win." : "You lose.")
 }
 
+//Looks for the best spot the AI can put an X in. 
 function bestSpot(){
-    return emptySquares()[0];
+    return miniMax(origBoard, AI).index;
 }
 
 
+//Displays the winner after the game ends.
 function declareWinner(who){
     document.querySelector(".endgame").style.display = "block";
     document.querySelector(".endgame .text").innerText = who;
 }
 
+//Function to check what squares are empty, helper for the AI to select its next move.
 function emptySquares(){
     return origBoard.filter(s => typeof s =='number');
 }
 
+//Checks if the game is currently in a tie state or not. If not game keeps going, otherwise cant go on. 
 function checkTie(){
     if(emptySquares().length == 0){
         for(var i = 0; i < cells.length; i++){
@@ -98,3 +102,60 @@ function checkTie(){
     return false;
 }
 
+
+function miniMax(newBoard, player){
+    //Get all available spots on the board.
+    var availSpots = emptySquares(newBoard);
+    //If the human wins, return -10, else return +10. If tie, return a 0.
+    if(checkWin(newBoard, human)){
+        return {score: -10}
+    }
+    else if(checkWin(newBoard, AI)){
+        return {score: 10};
+    }
+    else if(availSpots.length == 0){
+        return {score: 0};
+    }
+
+    var moves = [];     //Array stores all moves possible.
+    for(var i = 0; i < availSpots.length; i++){
+        var move = {};
+        move.index = newBoard[availSpots[i]];   
+        newBoard[availSpots[i]] = player;
+
+        if(player == AI){
+            var result = miniMax(newBoard, human);
+            move.score = result.score;  //the score for that move would be the score for the human winning which is -10.
+        }
+        else{
+            var result = miniMax(newBoard, AI);
+            move.score = result.score;  //the score for that move would be the score for the AI winning which is 10.
+        }
+
+        newBoard[availSpots[i]] = move.index;   //assign index to the newboard.
+        moves.push(move);   
+    }
+
+    var bestMove;
+
+    if(player === AI){
+        var bestScore = -10000;
+        for(var i = 0; i < moves.length; i++){
+            if(moves[i].score > bestScore){
+                bestScore = moves[i].score;
+                bestMove = i;
+            }
+        }
+    }
+    else{
+        var bestScore = 10000;
+        for(var i = 0; i < moves.length; i++){
+            if(moves[i].score < bestScore){
+                bestScore = moves[i].score;
+                bestMove = i;
+            }
+        }
+    }
+
+    return moves[bestMove]; 
+}
